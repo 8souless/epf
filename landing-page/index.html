@@ -14,7 +14,7 @@
     </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; font-family: 'Montserrat', sans-serif; }
+        html, body { height: 100%; font-family: 'Montatron', sans-serif; }
         body {
             background: radial-gradient(circle at center, #2a0508, #050505);
             color: #FFFFFF;
@@ -43,6 +43,40 @@
             align-items: center;
             justify-content: center;
         }
+        /* Step content - hidden by default */
+        .step-content {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3; pointer-events: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .step-content.hidden { display: none; text-decoration: line-through; }
+        #word0, #word1, #eyebrow { font-size: 4rem; font-weight: 800; }
+        #word1 { font-size: 6rem; font-weight: 900; }
+        #eyebrow { font-size: 1rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.8; }
+        .timeline { display: flex; justify-content: center; gap: 2rem; margin-top: 3rem; flex-wrap: wrap; }
+        .card-wrapper { width: 200px; height: 260px; cursor: pointer; }
+        .card-wrapper:hover img { transform: scale(1.05); transition: transform 0.3s; }
+        .booking-form {
+            background: rgba(255,255,255,0.1);
+            padding: 2rem; border-radius: 10px;
+            margin-top: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;
+        }
+        .booking-form input, .booking-form select {
+            width: 100%; padding: 0.8rem; margin: 0.5rem 0;
+            background: white; border: none; border-radius: 5px;
+        }
+        .booking-form button {
+            background: #E10600; color: white; border: none; padding: 1rem 2rem;
+            cursor: pointer; border-radius: 5px; font-weight: 800;
+        }
+        .parallax-scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
+        .parallax-layer { position: absolute; width: 100%; height: 100%; }
+        .parallax-layer.land { z-index: 4; }
+        .parallax-layer.fore { z-index: 6; }
+        .northfield-text { position: absolute; bottom: 30%; width: 100%; font-size: 3rem; font-weight: 900; }
+        #region { position: absolute; bottom: 10%; left: 2rem; }
         /* Mobile responsive at 390px width */
         @media (max-width: 390px) {
             #word0 { font-size: 2.5rem; }
@@ -51,6 +85,7 @@
             nav a { padding: 4px 8px; }
             .rail-dot { width: 10px; height: 10px; }
             .cta-button { padding: 8px 16px; font-size: 0.8rem; }
+            .booking-form { max-width: 90%; padding: 1rem; }
         }
     </style>
 </head>
@@ -73,8 +108,59 @@
             </div>
         </header>
 
+        <!-- Disc container -->
         <div id="disc-container">
             <canvas class="dust-canvas" id="dust-canvas"></canvas>
+        </div>
+
+        <!-- Step 0: Initial landing -->
+        <div id="step0" class="step-content">
+            <div id="word0" style="display:block;">ELITE PRO</div>
+        </div>
+
+        <!-- Step 1: Training options -->
+        <div id="step1" class="step-content hidden">
+            <div id="word1">TRAIN</div>
+            <div id="eyebrow">with us, grow with us</div>
+            <div class="timeline">
+                <div class="card-wrapper" data-tile="coach">
+                    <img src="assets/coach.webp" alt="Who we are - Coach" loading="lazy">
+                </div>
+                <div class="card-wrapper" data-tile="corner">
+                    <img src="assets/corner.webp" alt="Classes - Boxing Corner" loading="lazy">
+                </div>
+                <div class="card-wrapper" data-tile="outside">
+                    <img src="assets/outside.webp" alt="Where we are - Training Location" loading="lazy">
+                </div>
+                <div class="card-wrapper" data-tile="coach-close">
+                    <img src="assets/coach.webp" alt="Contact - Get in Touch" loading="lazy">
+                </div>
+            </div>
+            <div class="booking-form">
+                <input type="text" placeholder="Name" required>
+                <input type="tel" placeholder="Phone" required>
+                <select>
+                    <option>Boxing Class</option>
+                    <option>Kickboxing</option>
+                    <option>MMA</option>
+                </select>
+                <button type="submit">Book Free Trial →</button>
+                <p>Call 07968 043030 | <span id="hours">[hours]</span> | <span id="prices">[prices]</span></p>
+            </div>
+        </div>
+
+        <!-- Step 2: Landing (parallax) -->
+        <div id="step2" class="step-content hidden">
+            <div class="parallax-scene">
+                <div class="parallax-layer land" style="background:url('assets/outside.webp'); background-size:cover; opacity:0.8;"></div>
+                <div class="parallax-layer fore" style="background:url('assets/fore.webp'); background-size:cover; opacity:0.6;"></div>
+            </div>
+            <div class="northfield-text" style="color:#FFFFFF;">NORTHFIELD</div>
+            <div id="region" style="color:#FFFFFF;">
+                <destName>NORTHFIELD</destName>
+                <small style="opacity:0.8;">201A Merritts Brook Lane · Birmingham B31 1UH</small>
+            </div>
+            <button id="explore" style="margin-top:2rem;">Explore</button>
         </div>
 
         <div class="hint" id="hint">Touch or drag the disc</div>
@@ -187,14 +273,24 @@
 
         // Navigation functions
         function go(n) {
-            st = Math.max(0, Math.min(2, n));
+            const target = Math.max(0, Math.min(2, n));
+            if (target === st) return;
+            st = target;
             updateRail();
+            updateSteps();
         }
 
         function updateRail() {
             document.querySelectorAll('.rail-dot').forEach((dot, i) => {
                 dot.classList.toggle('on', i === Math.floor(st));
             });
+        }
+
+        function updateSteps() {
+            document.querySelectorAll('.step-content').forEach((el, i) => {
+                el.classList.toggle('hidden', i !== Math.floor(st));
+            });
+            document.getElementById('word0').style.display = st === 0 ? 'block' : 'none';
         }
 
         // Step transitions
